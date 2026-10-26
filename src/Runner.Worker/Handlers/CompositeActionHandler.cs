@@ -337,8 +337,10 @@ namespace GitHub.Runner.Worker.Handlers
                         // Test the condition again. The job was cancelled after the condition was originally evaluated.
                         jobCancelRegister = ExecutionContext.Root.CancellationToken.Register(() =>
                         {
-                            // Mark job as cancelled
-                            ExecutionContext.Root.Result = TaskResult.Canceled;
+                            // Mark job as Cancelled or Failed depending on HostContext shutdown token's cancellation
+                            ExecutionContext.Root.Result = HostContext.RunnerShutdownToken.IsCancellationRequested
+                                                           ? TaskResult.Failed
+                                                           : TaskResult.Canceled;
                             ExecutionContext.Root.JobContext.Status = ExecutionContext.Root.Result?.ToActionResult();
                             step.ExecutionContext.SetGitHubContext("action_status", (ExecutionContext.Root.Result?.ToActionResult() ?? ActionResult.Cancelled).ToString().ToLowerInvariant());
 
@@ -377,8 +379,10 @@ namespace GitHub.Runner.Worker.Handlers
                     {
                         if (ExecutionContext.Root.Result != TaskResult.Canceled)
                         {
-                            // Mark job as cancelled
-                            ExecutionContext.Root.Result = TaskResult.Canceled;
+                            // Mark job as Cancelled or Failed depending on HostContext shutdown token's cancellation
+                            ExecutionContext.Root.Result = HostContext.RunnerShutdownToken.IsCancellationRequested
+                                ? TaskResult.Failed
+                                : TaskResult.Canceled;
                             ExecutionContext.Root.JobContext.Status = ExecutionContext.Root.Result?.ToActionResult();
                         }
                     }
